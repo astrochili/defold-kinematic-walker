@@ -1,0 +1,22 @@
+# System
+.DS_Store
+Thumbs.db
+
+# Defold
+/.internal
+/build
+/bundle
+log.txt
+
+# VSCode
+/.defold_api
+/.vscode
+
+# Operator
+/operator
+
+# TrenchBroom
+/trenchbroom
+*.map
+*.mtl
+*.obj

@@ -1,0 +1,789 @@
+--[[
+  walker.script
+  github.com/astrochili/defold-kinematic-walker
+
+  Copyright (c) 2022 Roman Silin
+  MIT license. See LICENSE for details.
+--]]
+
+-- Properties
+
+go.property('observer', msg.url())
+
+go.property('spectator_mode', false)
+go.property('spectator_clipping', true)
+
+go.property('internal_control', true)
+
+go.property('normal_speed', 3)
+go.property('shift_speed', 5)
+
+go.property('acceleration', 10)
+go.property('deceleration', 20)
+
+go.property('is_crouching_allowed', true)
+
+go.property('stair_height', 0.3)
+go.property('stair_angle', 15)
+
+go.property('jump_power', 10)
+go.property('anti_bunny_time', 0.2)
+go.property('air_control', 0.3)
+
+go.property('climbing_angle', 46)
+go.property('slope_speed_factor', 0.5)
+
+go.property('gravity', vmath.vector3(0, -8, 0))
+go.property('gravity_acceleration', 3)
+
+go.property('sensor_length', 0.05)
+
+go.property('collision_standing', msg.url('#collision_standing'))
+go.property('collision_crouching', msg.url('#collision_crouching'))
+
+go.property('walker_collision_group', hash('walker'))
+go.property('world_collision_group', hash('default'))
+
+go.property('eyes_position_url', msg.url('eyes'))
+go.property('eyes_switch_duration', 0.2)
+
+--
+-- Helpers
+
+local debug_colors = {
+  black = vmath.vector4(0, 0, 0, 1),
+  red = vmath.vector4(1, 0, 0, 1),
+  green = vmath.vector4(0, 1, 0, 1),
+  blue = vmath.vector4(0, 0, 1, 1),
+  purple = vmath.vector4(1, 0.5, 1, 1),
+  yellow = vmath.vector4(1, 1, 0, 1)
+}
+
+local vectors = {
+  zero = vmath.vector3(0, 0, 0),
+  up = vmath.vector3(0, 1, 0),
+  down = vmath.vector3(0, -1, 0),
+  backward = vmath.vector3(0, 0, -1)
+}
+
+local constants = {
+  collision_crouching_raycast_id = 101
+}
+
+local function project_on_plane(plane_normal, v)
+  local distance = vmath.dot(plane_normal, v)
+  return v - plane_normal * distance
+end
+
+local function post(reciever, message_id, message)
+  if reciever then
+    msg.post(reciever, message_id, message or { })
+  end
+end
+
+--
+-- Spectator
+
+local function set_spectator_mode(self, spectator_mode)
+  self.spectator_mode = spectator_mode
+  
+  if self.spectator_mode then
+    self.is_jumping = false
+    self.jump_speed = nil
+    self.clipping = self.spectator_clipping
+  else
+    self.clipping = true
+  end
+end
+
+--
+-- Debug
+
+local function add_debug_line(self, from, to, color)
+  if not self.is_debug then
+    return
+  end
+
+  local line = { 
+    start_point = from,
+    end_point = to,
+    color = color
+  }
+
+  table.insert(self.debug_lines, line)
+end
+
+local function draw_debug_lines(self)
+  for _, line in ipairs(self.debug_lines) do
+    msg.post('@render:', hash 'draw_line', line)
+  end
+
+  self.debug_lines = { }
+end
+
+--
+-- Capsule Size
+
+local function init_capsule_size(self)
+  local size = { }
+  local collision_groups = { self.walker_collision_group }
+  local ray_distance = 1000
+
+  -- Get the standing height
+
+  local standing_ray_to = self.position
+  local standing_ray_from = standing_ray_to + vectors.up * ray_distance
+  local standing_result = physics.raycast(standing_ray_from, standing_ray_to, collision_groups)
+
+  assert(standing_result, 'Can\'t find the standing collision capsule ' .. tostring(self.collision_standing) .. ' with the ' .. tostring(self.walker_collision_group) .. ' group')
+  size.height = ray_distance * (1 - standing_result.fraction)
+  
+  -- Get the radius
+
+  local radius_ray_to = self.position + vectors.up * size.height / 2
+  local radius_ray_from = radius_ray_to + vectors.backward * ray_distance
+  local radius_result = physics.raycast(radius_ray_from, radius_ray_to, collision_groups)
+  
+  size.radius = ray_distance * (1 - radius_result.fraction)
+  size.diameter = size.radius * 2
+
+  -- Get the crouching height
+
+  if self.collision_crouching then
+    msg.post(self.collision_standing, hash 'disable')
+
+    local crouching_ray_to = self.position
+    local crouching_ray_from = crouching_ray_to + vectors.up * size.height
+    physics.raycast_async(crouching_ray_from, crouching_ray_to, collision_groups, constants.collision_crouching_raycast_id)
+  end
+  
+  return size
+end
+
+local function did_raycast(self, response)
+  if response.request_id ~= constants.collision_crouching_raycast_id then
+    return
+  end
+
+  post(self.collision_standing, hash 'enable')
+  post(self.collision_crouching, hash 'disable')
+
+  if response.fraction then
+    self.capsule_size.height_crouching = self.capsule_size.height * (1 - response.fraction)
+
+    if self.eyes_position_standing then
+      self.eyes_position_crouching = self.eyes_position_standing + vectors.down * (self.capsule_size.height - self.capsule_size.height_crouching)
+    end
+  else
+    self.collision_crouching = nil
+    assert(response.fraction, 'Can\'t find the crouching collision capsule ' .. tostring(self.collision_crouching) .. ' with the ' .. tostring(self.walker_collision_group) .. ' group')
+  end
+end
+
+--
+-- Direction
+
+local function calculate_direction(self)
+  local direction = vmath.vector3()
+  local input = self.input
+
+  if input.forward then
+    direction.z = -1
+  elseif input.backward then
+    direction.z = 1
+  end
+
+  if input.right then
+    direction.x = 1
+  elseif input.left then
+    direction.x = -1
+  end
+
+  if self.spectator_mode then
+    if input.jump then
+      direction.y = 1
+    elseif self.camera and direction ~= vectors.zero then
+      local camera_rotation = go.get_rotation(self.camera)
+      direction = vmath.rotate(camera_rotation, direction)
+      direction = vmath.rotate(vmath.conj(self.rotation), direction)
+    end
+  end
+
+  if vmath.length(direction) > 1 then
+    direction = vmath.normalize(direction)
+  end
+
+  direction = vmath.rotate(self.rotation, direction)
+
+  return direction
+end
+
+local function update_rotation_with_camera(self)
+  local camera_euler_y = go.get(self.camera, hash 'euler.y')
+  local plane_direction = vmath.quat_rotation_y(math.rad(camera_euler_y))
+  go.set_rotation(plane_direction, '.')
+end
+
+--
+-- Collisions
+
+local function handle_contact_point_response(self, point, sender)
+  if self.pause ~= nil or not self.clipping or point.distance < 0.001 then
+    return
+  end
+
+  if sender == self.collision_standing and self.is_crouching then
+    local center = vmath.vector3(self.position.x, point.position.y, self.position.z)
+    local distance = vmath.length(center - point.position)
+    local is_point_inside = distance < self.capsule_size.radius
+    local is_point_above = point.position.y > self.position.y + self.capsule_size.height_crouching
+
+    if is_point_inside and is_point_above then
+      self.is_standing_available = false
+    end
+  end
+
+  if sender ~= self.collision then
+    return
+  end
+
+  table.insert(self.contact_points, point)
+
+  local is_moving = vmath.length(self.intended_movement) > 0 and self.intended_movement == self.intended_movement
+  local is_starting_jump = self.is_grounded and self.is_jumping
+  local correction = self.squizzing and self.squizzing or self.position_correction
+  local angle_is_acute = vmath.dot(correction, -point.normal) > 0.01
+  local compensation
+
+  if correction == vectors.zero and self.is_grounded then
+    -- Check the angle between the ground and the first point normal
+    angle_is_acute = vmath.dot(self.ground.normal, -point.normal) > 0.01
+    
+    local correction_length = vmath.length(self.intended_movement) + vmath.length(correction)
+    local correction_direction = self.ground.normal
+    correction = self.ground.normal * correction_length
+
+    if is_moving and angle_is_acute and point.normal.y > self.slope_limit then
+      -- Move up from the hall
+      correction_direction = vectors.up
+      correction = correction_direction * correction_length
+      angle_is_acute = false
+    end
+  end
+
+  if is_moving and angle_is_acute and not is_starting_jump then
+    if self.squizzing then
+      -- Just stuck because of two acute angles
+      self.position = self.last_position
+      go.set_position(self.last_position)
+      return
+    else
+      -- Start squiz sliding by an acute angle
+      local movement_length = vmath.length(self.intended_movement)
+      local correction_a = correction
+      local correction_b = point.normal * point.distance
+
+      local normalized_a = vmath.normalize(correction_a)
+      local normalized_b = vmath.normalize(correction_b)
+
+      self.is_stucked_between_slopes = not self.is_grounded and normalized_a.y <= self.slope_limit and normalized_b.y <= self.slope_limit
+      self.squizzing = vectors.zero
+
+      local cross = vmath.cross(normalized_a, normalized_b)
+
+      if vmath.length(cross) > 0 and not self.is_stucked_between_slopes then
+        local cross_direction = vmath.normalize(cross)
+        local squizing_dot = vmath.dot(cross_direction, vmath.normalize(self.intended_movement))
+        self.squizzing = cross_direction * movement_length * squizing_dot  
+      end
+
+      local reversed_movement = self.last_position - self.position
+      compensation = reversed_movement + self.squizzing
+    end
+  else
+    -- Just push out from collision
+    local projection = vmath.project(correction, point.normal * point.distance)
+    
+    if projection < 1 then
+      local is_climbing_allowed = point.normal.y > self.slope_limit or self.spectator_mode
+      if is_climbing_allowed then
+        -- Normal pushing
+        compensation = (point.distance - point.distance * projection) * point.normal
+        self.slope = point
+      else
+        -- Ground pushing because of slope limit
+        local corrected_normal = point.normal
+
+        if self.is_grounded then
+          corrected_normal = project_on_plane(self.ground.normal, point.normal)
+        else
+          corrected_normal.y = 0 
+        end
+        
+        local distance = point.distance - point.distance * projection
+        compensation = distance * corrected_normal
+      end
+    end  
+  end
+  
+  if compensation then
+    self.position_correction = correction + compensation
+    self.position = self.position + compensation  
+    go.set_position(self.position)
+
+    local message = {
+      position = self.position,
+      correction = self.position_correction
+    }
+    post(self.observer, hash 'object_post_movement', message)
+    post(self.camera, hash 'object_post_movement', message)
+  end
+end
+
+--
+-- Triggers
+
+local function handle_trigger_response(self, message, sender)
+  if sender == self.current_collision_url then
+    if message.enter then
+      self.trigger_ids[message.other_id] = true
+      post(self.observer, hash 'walker_trigger_enter', message)
+    else
+      self.trigger_ids[message.other_id] = nil
+      post(self.observer, hash 'walker_trigger_exit', message)
+    end
+  end
+end
+
+--
+-- Crouching
+
+local function crouch(self, is_crouching)
+  if self.is_crouching == is_crouching then
+    return
+  end
+
+  if not self.collision_crouching then
+    return
+  end
+
+  if is_crouching then
+    self.is_crouching = true
+    self.collision = self.collision_crouching
+
+    msg.post(self.collision_crouching, hash 'enable')
+
+    if self.eyes_position_crouching then
+      go.animate(self.eyes_position_url, 'position', go.PLAYBACK_ONCE_FORWARD, self.eyes_position_crouching, go.EASING_INOUTQUAD, self.eyes_switch_duration)
+    end
+
+    post(self.observer, hash 'walker_crouching')
+  elseif not self.is_ceiling_above and self.is_standing_available then
+    self.is_crouching = false
+    self.collision = self.collision_standing
+
+    msg.post(self.collision_crouching, hash 'disable')
+
+    if self.eyes_position_standing then
+      go.animate(self.eyes_position_url, 'position', go.PLAYBACK_ONCE_FORWARD, self.eyes_position_standing, go.EASING_INOUTQUAD, self.eyes_switch_duration)
+    end
+
+    post(self.observer, hash 'walker_standing')
+  end
+end
+
+--
+-- Lifecycle
+
+function init(self)
+	msg.post('.', hash 'acquire_input_focus')
+
+  self.bindings = {
+    forward = hash 'key_w',
+    backward = hash 'key_s',
+    left = hash 'key_a',
+    right = hash 'key_d',
+    jump = hash 'key_space',
+    crouch = hash 'key_c',
+    shift = hash 'key_lshift'
+  }
+
+  self.input = {
+    forward = nil,
+    backward = nil,
+    left = nil,
+    right = nil,
+    jump = nil,
+    crouch = nil,
+    shift = nil
+  }
+
+  self.sensor_length = math.max(self.sensor_length, 0.05)
+
+  local slope_angle = math.min(math.max(self.climbing_angle, 0), 90)  
+  local slope_quat = vmath.quat_rotation_x(math.rad(slope_angle))
+  self.slope_limit = vmath.rotate(slope_quat, vectors.up).y
+
+  local stair_angle = math.min(math.max(self.stair_angle, 0), 30)  
+  local stair_quat = vmath.quat_rotation_x(math.rad(stair_angle))
+  self.stair_limit = vmath.rotate(stair_quat, vectors.up).y
+
+  self.clipping = self.spectator_clipping or not self.spectator_mode
+ 
+  local initial_position = go.get_position('.')
+  initial_position.y = initial_position.y + self.sensor_length
+  go.set_position(initial_position)
+
+  self.last_position = initial_position
+  self.position = self.last_position
+  self.velocity = vectors.zero
+  self.desired_movement = vectors.zero
+  self.position_correction = vectors.zero
+  
+  self.rotation = go.get_rotation('.')
+  
+  self.is_jumping = false
+  self.jump_speed = nil
+  self.anti_bunny_timer = 0
+
+  self.ground = nil
+  self.last_ground = nil
+  self.is_grounded = false
+
+  self.is_crouching = false
+  self.is_ceiling_above = false
+
+  self.collision = self.collision_standing
+
+  if self.eyes_position_url then
+    self.eyes_position_standing = go.get_position(self.eyes_position_url)
+  end
+
+  self.trigger_ids = { }
+  self.contact_points = { }
+
+  self.is_debug = false
+  self.debug_lines = { }
+
+  msg.post('#', 'did_init')
+end
+
+function did_init(self)
+  self.capsule_size = init_capsule_size(self)
+  self.ceiling_sensor_position = vectors.up * self.capsule_size.height
+end
+
+function update(self, dt)
+  if self.pause ~= nil then
+    if self.pause == false then
+      self.pause = nil
+    end
+    return
+  end
+
+  physics.wakeup(self.collision)
+
+  -- Rotation
+  
+  self.rotation = go.get_rotation('.')
+
+  if self.camera then
+    update_rotation_with_camera(self)
+  end
+
+  -- Check the ground
+
+  self.ground = nil
+  self.is_grounded = false
+  
+  if not self.spectator_mode then
+    local ground_ray_from = self.position + vectors.up * self.capsule_size.radius
+    local ground_ray_to = self.position + vectors.down * self.sensor_length
+    self.ground = physics.raycast(ground_ray_from, ground_ray_to, { self.world_collision_group })
+
+    if self.slope then
+      local slope_ray_from = ground_ray_from
+      local slope_ray_to = ground_ray_from - self.slope.normal * (self.capsule_size.radius + self.sensor_length)
+      self.slope = physics.raycast(slope_ray_from, slope_ray_to, { self.world_collision_group })
+      self.ground = self.ground or self.slope
+      
+      add_debug_line(self, slope_ray_from, slope_ray_to, self.slope and debug_colors.green or debug_colors.black)
+    end
+
+    if self.ground then
+      self.is_grounded = self.ground.normal.y > self.slope_limit
+    end
+
+    local slope_is_double_of_ground = self.slope and self.slope.normal.y > 0.9999
+    if not self.ground or slope_is_double_of_ground then
+      self.slope = nil
+    end
+
+    add_debug_line(self, ground_ray_from, ground_ray_to, self.is_grounded and debug_colors.green or debug_colors.black)
+  end
+
+  -- Calculate velocity
+
+  local desired_direction = calculate_direction(self)
+
+  local walk_speed = self.normal_speed
+  local is_shift_speed_available = not self.is_crouching or self.shift_speed < self.normal_speed
+  
+  if self.input.shift and is_shift_speed_available then
+    walk_speed = self.shift_speed
+  end
+  
+  local target_speed = self.is_jumping and self.jump_speed or walk_speed
+  local target_velocity = desired_direction * target_speed
+
+  if not self.is_grounded and not self.stair and not self.spectator_mode then
+    target_velocity = target_velocity + self.gravity
+  end
+
+  local should_force_velocity = false
+  local should_accelerate = vmath.length(target_velocity) > vmath.length(self.velocity)
+  local acceleration = should_accelerate and self.acceleration or self.deceleration
+  
+  if not self.is_grounded then
+    acceleration = acceleration * self.air_control
+  end
+
+  local applying_force = (target_velocity - self.velocity) * acceleration * dt
+
+  local old_velocity = self.velocity
+  self.velocity = self.velocity + applying_force
+
+  -- Gravity
+
+  if self.is_grounded or self.is_stucked_between_slopes and self.velocity.y <= 0 then
+    self.is_jumping = false
+    self.jump_speed = nil
+    
+    if self.velocity.y < 0 then
+      self.velocity.y = 0
+      should_force_velocity = true
+    end
+  elseif not self.spectator_mode and not self.stair then
+    local applying_gravity = (target_velocity.y - self.velocity.y) * self.gravity_acceleration * dt
+    self.velocity.y = old_velocity.y + applying_gravity  
+  end
+
+  -- Ceiling
+
+  local ceiling_ray_from = self.position
+  local ceiling_ray_to = ceiling_ray_from + self.ceiling_sensor_position + vectors.up * self.sensor_length
+  local ceiling = physics.raycast(ceiling_ray_from, ceiling_ray_to, { self.world_collision_group })
+  self.is_ceiling_above = ceiling ~= nil
+
+  if self.is_jumping and self.is_ceiling_above then
+    -- Ricochet down
+    self.velocity = vectors.down * target_speed / 2
+    should_force_velocity = true
+  end
+
+  add_debug_line(self, ceiling_ray_from, ceiling_ray_to, self.is_ceiling_above and debug_colors.red or debug_colors.black)
+
+  -- Crouching
+  
+  if self.is_crouching_allowed and self.input.crouch ~= self.is_crouching then
+    crouch(self, self.input.crouch or false)
+  end
+
+  -- Jumping
+
+  local has_ground_to_jump = self.is_grounded or self.is_stucked_between_slopes
+  local has_space_to_jump = self.is_standing_available and not self.is_ceiling_above
+
+  if self.jump_power > 0 and has_ground_to_jump and has_space_to_jump then
+    if self.input.jump and self.anti_bunny_timer == 0 then
+      self.velocity = self.velocity + vectors.up * self.jump_power
+      self.anti_bunny_timer = self.anti_bunny_time
+      self.is_jumping = true
+      self.jump_speed = walk_speed
+      self.jump_direction = desired_direction
+
+      post(self.observer, hash 'walker_jumping')
+    end
+
+    if self.anti_bunny_timer > 0 then
+      self.anti_bunny_timer = math.max(self.anti_bunny_timer - dt, 0)
+    end  
+  end
+
+  -- Applying velocity
+
+  if vmath.length(self.velocity) < 0.001 then
+    -- Stop the endless pursuit of zero.
+    -- TODO: Is there a more smart way to smooth acceleration and stopping instead of the current?
+    self.velocity = vectors.zero
+  end
+
+  local movement
+
+  if should_force_velocity then
+    movement = self.velocity * dt
+  else
+    movement = (old_velocity + self.velocity) * dt / 2
+  end
+
+  -- Apply ground normal to direction and speed
+
+  if self.is_grounded and not self.is_jumping and vmath.length(movement) > 0 then
+    local tilt_quat = vmath.quat_from_to(self.ground.normal, vectors.up)
+    tilt_quat = vmath.conj(tilt_quat)
+    
+    local normal_movement = vmath.rotate(tilt_quat, movement)
+    local normal_movement_length = vmath.length(normal_movement)
+
+    if normal_movement_length > 0 and self.ground.normal.y > 0.001 then
+      local normal_movement_direction = vmath.normalize(normal_movement)
+      local speed_correction = normal_movement * normal_movement_direction.y      
+      movement = normal_movement - (speed_correction * self.slope_speed_factor)      
+    end
+  end
+
+  -- Stairs
+
+  self.stair = nil
+
+  if self.stair_height > 0 and vmath.length(movement) > 0 and movement.y > -0.001 then
+    local stair_sensor = vmath.normalize(movement) * (self.capsule_size.radius + self.sensor_length + vmath.length(movement))
+    local stair_ray_from = self.position + stair_sensor + vectors.up * self.stair_height
+    local stair_ray_to = stair_ray_from + vectors.down * (self.stair_height - self.sensor_length)
+    local result = physics.raycast(stair_ray_from, stair_ray_to, { self.world_collision_group })
+
+    add_debug_line(self, stair_ray_from, stair_ray_to, debug_colors.red)
+
+    if result and result.normal.y > self.stair_limit then
+      self.stair = result
+      movement = vmath.length(movement) * vmath.normalize(stair_ray_from - self.position)
+    end
+  end
+
+  -- Intended movement
+
+  self.intended_movement = vmath.length(movement) > 0 and movement or vectors.zero
+  local is_moving = self.intended_movement ~= vectors.zero
+
+  add_debug_line(self, self.position, self.position + self.intended_movement * 10, debug_colors.green)
+
+  -- Update position
+
+  if is_moving then
+    self.last_position = self.position
+    self.position = self.position + self.intended_movement
+    go.set_position(self.position)
+  end
+
+  if self.intended_movement ~= vectors.zero then
+    local moving_message = {
+      direction = is_moving and vmath.normalize(self.intended_movement) or nil,
+      speed = vmath.length(self.intended_movement) / dt,
+      is_grounded = self.is_grounded
+    }
+    post(self.observer, hash 'walker_moving', moving_message)
+  end
+
+  local ground_message = { normal = self.is_grounded and self.ground.normal or nil }
+  post(self.camera, hash 'ground_normal', ground_message)
+
+  -- Falling
+
+  if self.ground then
+    if self.highest_point_y then
+      local falling_height = self.highest_point_y - self.position.y
+      
+      if falling_height > 0 then
+        post(self.observer, hash 'walker_falling', { height = falling_height })
+      end
+
+      self.highest_point_y = nil
+    end
+  else
+    self.highest_point_y = self.highest_point_y or self.position.y
+    self.highest_point_y = self.position.y > self.highest_point_y and self.position.y or self.highest_point_y
+  end
+
+  -- Debug
+
+  if self.position_correction ~= vectors.zero then
+    add_debug_line(self, self.position, self.position + self.position_correction * 10, debug_colors.purple)
+  end
+
+  for _, point in ipairs(self.contact_points) do
+    add_debug_line(self, point.position, point.position + point.normal * point.distance, debug_colors.yellow)
+  end  
+
+  if self.is_debug then
+    draw_debug_lines(self)
+  end
+
+  -- Reset one-frame variables
+
+  self.contact_points = { }
+  self.position_correction = vectors.zero
+  self.squizzing = nil 
+  self.is_stucked_between_slopes = false
+  self.is_standing_available = true
+end
+
+function on_input(self, action_id, action)
+  if not self.internal_control then
+    return
+  end
+
+  if not action_id then
+    return
+  end
+
+  if action_id == self.bindings.right then
+    self.input.right = not action.released or nil
+  elseif action_id == self.bindings.left then
+    self.input.left = not action.released or nil
+  end
+
+  if action_id == self.bindings.forward then
+    self.input.forward = not action.released or nil
+  elseif action_id == self.bindings.backward then
+    self.input.backward = not action.released or nil
+  end
+
+  if action_id == self.bindings.jump then
+    self.input.jump = not action.released or nil
+  elseif action_id == self.bindings.crouch then
+    self.input.crouch = not action.released or nil
+  end
+
+  if action_id == self.bindings.shift then
+    self.input.shift = not action.released or nil
+  end
+end
+
+function on_message(self, message_id, message, sender)
+  if message_id == hash 'contact_point_response' then
+    handle_contact_point_response(self, message, sender)
+  elseif message_id == hash 'trigger_response' then
+    handle_trigger_response(self, message, sender)
+  elseif message_id == hash 'did_init' then
+    did_init(self)
+  elseif message_id == hash 'ray_cast_response' or message_id == hash 'ray_cast_missed' then
+    did_raycast(self, message)
+  elseif message_id == hash 'debug' then
+    self.is_debug = message.is_enabled
+  elseif message_id == hash 'spectator_mode' then
+    set_spectator_mode(self, message.is_enabled)
+  elseif message_id == hash 'follow_camera' then
+    self.camera = msg.url(message.camera)
+    self.camera.fragment = nil
+  elseif message_id == hash 'unfollow_camera' then
+    self.camera = nil
+  elseif message_id == hash 'internal_control' then
+    self.internal_control = message.is_enabled
+    self.input = self.internal_control and self.input or { }
+    self.bindings = message.bindings
+  elseif message_id == hash 'manual_control' then
+    self.input = message
+  elseif message_id == hash 'pause' then
+    self.pause = message.is_paused
+  end
+end
