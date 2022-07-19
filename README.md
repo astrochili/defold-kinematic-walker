@@ -1,6 +1,7 @@
-# Defold Kinematic Walker
+![logo](https://user-images.githubusercontent.com/4752473/175769046-bbf9f71c-c970-4921-a27f-d56361ce0e53.png)
+[![buymeacoffee](https://user-images.githubusercontent.com/4752473/179627111-617b77b1-f900-4fac-9e03-df73994246ad.svg)](https://www.buymeacoffee.com/astrochili) [![yoomoney](https://user-images.githubusercontent.com/4752473/179627145-7b0fde31-9d1b-4050-933f-82ce3227c617.svg)](https://yoomoney.ru/to/410011261306506) [![twitter](https://user-images.githubusercontent.com/4752473/179627140-c8991473-c4c1-4d6a-9bb1-4dc2117b049f.svg)](https://twitter.com/astronachos) [![telegram](https://user-images.githubusercontent.com/4752473/179627134-0bdcf8a5-7826-4ed2-b8cd-06d0b9792422.svg)](https://t.me/astronachos)
 
-![](https://user-images.githubusercontent.com/4752473/175769046-bbf9f71c-c970-4921-a27f-d56361ce0e53.png)
+# Defold Kinematic Walker
 
 ## Overview
 
@@ -10,20 +11,21 @@ Although not all the collision cases are handled perfect at the moment, you can 
 
 Ready to use with [Operator](https://github.com/astrochili/defold-operator/) or you own camera controller.
 
-[Play HTML5 demo](https://astronachos.com/defold/kinematic-walker).
+🎮 [Play HTML5 demo](https://astronachos.com/defold/kinematic-walker).
 
-[Discuss on the forum](https://forum.defold.com/t/kinematic-walker-character-movement-controller-for-3d-games/71160/).
+💬 [Discuss on the forum](https://forum.defold.com/t/kinematic-walker-character-movement-controller-for-3d-games/71160/).
 
 ## Features
 
-- Collision resolving with level geometry.
-- Walking and running.
-- Jumping and crouching.
-- Climbing slopes and curbs.
-- Smooth acceleration and deceleration.
-- Internal control with key bindings.
-- External manual control with messages.
-- Spectator mode.
+- [x] Collision resolving with level geometry.
+- [x] Walking and running.
+- [x] Jumping and crouching.
+- [x] Climbing slopes and curbs.
+- [x] Smooth acceleration and deceleration.
+- [x] Internal control with key bindings.
+- [x] External manual control with messages.
+- [x] Spectator mode.
+- [ ] Request by [adding an issue or contribute](https://github.com/astrochili/defold-kinematic-walker/issues).
 
 ## Install
 
