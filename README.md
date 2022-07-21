@@ -9,11 +9,13 @@ This is a tweakable kinematic character controller suitable for 3D games made wi
 
 Although not all the collision cases are handled perfect at the moment, you can [avoid problems](#troubleshooting) by providing valid and smooth collision geometry of your level. The geometry in the demo is not smooth exclusively for stress testing purposes.
 
-Ready to use with [Operator](https://github.com/astrochili/defold-operator/) or you own camera controller.
+Ready to use with [🎥 Operator](https://github.com/astrochili/defold-operator/) or you own camera controller.
 
 🎮 [Play HTML5 demo](https://astronachos.com/defold/kinematic-walker).
 
 💬 [Discuss on the forum](https://forum.defold.com/t/kinematic-walker-character-movement-controller-for-3d-games/71160/).
+
+🎁 Get [free blockout textures](https://github.com/astrochili/blockout-textures) used in the demo.
 
 ## Features
 

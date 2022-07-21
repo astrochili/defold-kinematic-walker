@@ -1,6 +1,0 @@
-material: "/render/materials/model.material"
-vertices: "/assets/maps/sandbox/brushes/entity0_brush63.buffer"
-textures: "/assets/textures/blockout/black_dots.png"
-primitive_type: PRIMITIVE_TRIANGLES
-position_stream: "position"
-normal_stream: "normal"

@@ -1,6 +1,0 @@
-material: "/render/materials/model.material"
-vertices: "/assets/maps/sandbox/brushes/entity4_brush23.buffer"
-textures: "/assets/textures/blockout/orange_light_grid.png"
-primitive_type: PRIMITIVE_TRIANGLES
-position_stream: "position"
-normal_stream: "normal"

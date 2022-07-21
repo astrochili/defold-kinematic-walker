@@ -1,0 +1,6 @@
+material: "/render/materials/model.material"
+vertices: "/assets/maps/sandbox/buffer/slopes_1_blockout_white_cross.buffer"
+textures: "/assets/textures/blockout/white_cross.png"
+primitive_type: PRIMITIVE_TRIANGLES
+position_stream: "position"
+normal_stream: "normal"

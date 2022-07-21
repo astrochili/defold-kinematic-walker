@@ -1,0 +1,36 @@
+newmtl blockout/aqua_light_check
+map_Kd textures/blockout/aqua_light_check.png
+
+newmtl blockout/aqua_light_cross
+map_Kd textures/blockout/aqua_light_cross.png
+
+newmtl blockout/aqua_light_grid
+map_Kd textures/blockout/aqua_light_grid.png
+
+newmtl blockout/black_cross
+map_Kd textures/blockout/black_cross.png
+
+newmtl blockout/black_dots
+map_Kd textures/blockout/black_dots.png
+
+newmtl blockout/black_grid
+map_Kd textures/blockout/black_grid.png
+
+newmtl blockout/gray_grid
+map_Kd textures/blockout/gray_grid.png
+
+newmtl blockout/orange_light_grid
+map_Kd textures/blockout/orange_light_grid.png
+
+newmtl blockout/white_cross
+map_Kd textures/blockout/white_cross.png
+
+newmtl blockout/white_grid
+map_Kd textures/blockout/white_grid.png
+
+newmtl blockout/yellow_light_grid
+map_Kd textures/blockout/yellow_light_grid.png
+
+newmtl flags/unused
+map_Kd textures/flags/unused.png
+

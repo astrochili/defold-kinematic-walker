@@ -1,6 +1,0 @@
-material: "/render/materials/model.material"
-vertices: "/assets/maps/sandbox/brushes/entity2_brush21.buffer"
-textures: "/assets/textures/blockout/gray_grid.png"
-primitive_type: PRIMITIVE_TRIANGLES
-position_stream: "position"
-normal_stream: "normal"

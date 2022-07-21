@@ -7,9 +7,14 @@ uniform lowp sampler2D tex0;
 void main() {
     vec4 color = texture2D(tex0, var_texcoord0.xy);
 
-    vec3 ambient = vec3(0.7);
-    vec3 diffuse = vec3((1.0 + var_normal.y * 255.0) / 2.0);    
-    diffuse = clamp(ambient + diffuse * (vec3(1.0) - ambient), 0.0, 1.0);
+    if (color.a == 0.0) {
+       discard;
+    }
 
-    gl_FragColor = vec4(color.rgb * diffuse, color.a);
+    float ambient_part = 0.8;
+    
+    vec3 diffuse = vec3(1.0 - ambient_part);
+    diffuse = vec3(ambient_part) + diffuse * vec3(var_normal.y);
+
+    gl_FragColor = vec4(color.rgb * diffuse.rgb, 1.0);
 }
