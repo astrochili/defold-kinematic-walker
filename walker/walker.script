@@ -21,8 +21,6 @@ go.property('shift_speed', 5)
 go.property('acceleration', 10)
 go.property('deceleration', 20)
 
-go.property('is_crouching_allowed', true)
-
 go.property('stair_height', 0.3)
 go.property('stair_angle', 15)
 
@@ -38,10 +36,13 @@ go.property('gravity_acceleration', 3)
 
 go.property('sensor_length', 0.05)
 
+go.property('is_crouching_allowed', false)
+
 go.property('collision_standing', msg.url('#collision_standing'))
 go.property('collision_crouching', msg.url('#collision_crouching'))
 
-go.property('eyes_position_url', msg.url('eyes'))
+go.property('eyes_switching', false)
+go.property('eyes', msg.url('eyes'))
 go.property('eyes_switch_duration', 0.2)
 
 --
@@ -146,12 +147,14 @@ local function init_capsule_size(self)
 
   -- Get the crouching height
 
-  if self.collision_crouching then
+  if self.is_crouching_allowed and self.collision_crouching then
     msg.post(self.collision_standing, hash 'disable')
 
     local crouching_ray_to = self.position
     local crouching_ray_from = crouching_ray_to + vectors.up * size.height
     physics.raycast_async(crouching_ray_from, crouching_ray_to, collision_groups, constants.collision_crouching_raycast_id)
+  else
+    self.is_crouching_allowed = false
   end
   
   return size
@@ -172,8 +175,10 @@ local function did_raycast(self, response)
       self.eyes_position_crouching = self.eyes_position_standing + vectors.down * (self.capsule_size.height - self.capsule_size.height_crouching)
     end
   else
-    assert(response.fraction, 'Can\'t find the crouching collision capsule ' .. tostring(self.collision_crouching) .. ' with the ' .. tostring(self.collision_group) .. ' group')
+    local collision_crouching = self.collision_crouching
     self.collision_crouching = nil
+    self.is_crouching_allowed = false
+    assert(response.fraction, 'Can\'t find the crouching collision capsule ' .. tostring(collision_crouching) .. ' with the ' .. tostring(self.collision_group) .. ' group')
   end
 end
 
@@ -371,7 +376,7 @@ local function crouch(self, is_crouching)
     msg.post(self.collision_crouching, hash 'enable')
 
     if self.eyes_position_crouching then
-      go.animate(self.eyes_position_url, 'position', go.PLAYBACK_ONCE_FORWARD, self.eyes_position_crouching, go.EASING_INOUTQUAD, self.eyes_switch_duration)
+      go.animate(self.eyes, 'position', go.PLAYBACK_ONCE_FORWARD, self.eyes_position_crouching, go.EASING_INOUTQUAD, self.eyes_switch_duration)
     end
 
     post(self.observer, hash 'walker_crouching')
@@ -382,7 +387,7 @@ local function crouch(self, is_crouching)
     msg.post(self.collision_crouching, hash 'disable')
 
     if self.eyes_position_standing then
-      go.animate(self.eyes_position_url, 'position', go.PLAYBACK_ONCE_FORWARD, self.eyes_position_standing, go.EASING_INOUTQUAD, self.eyes_switch_duration)
+      go.animate(self.eyes, 'position', go.PLAYBACK_ONCE_FORWARD, self.eyes_position_standing, go.EASING_INOUTQUAD, self.eyes_switch_duration)
     end
 
     post(self.observer, hash 'walker_standing')
@@ -394,6 +399,18 @@ end
 
 function init(self)
 	msg.post('.', hash 'acquire_input_focus')
+
+  if self.observer == msg.url('#') then
+    self.observer = nil
+  end
+
+  if self.collision_crouching == msg.url('#') then
+    self.collision_crouching = nil
+  end
+
+  if self.eyes == msg.url('#') then
+    self.eyes = nil
+  end
 
   self.bindings = {
     forward = hash 'key_w',
@@ -453,9 +470,9 @@ function init(self)
   self.collision = self.collision_standing
   self.collision_group = physics.get_group(self.collision)
   self.collision_mask = { hash 'default' }
-
-  if self.eyes_position_url then
-    self.eyes_position_standing = go.get_position(self.eyes_position_url)
+    
+  if self.eyes_switching and self.eyes then
+    self.eyes_position_standing = go.get_position(self.eyes)
   end
 
   self.trigger_ids = { }

@@ -35,13 +35,13 @@ Add link to the zip-archive of the latest version of [defold-kinematic-walker](h
 
 ## Quick Start
 
-1. Add the `collision_standing` collision object with the capsule shape to your character's gameobject. The position anchor must be on the floor. Set type to `Kinematic`, set group to `walker` and switch locked rotation to `true`.
+1. Add the `collision_standing` collision object with the capsule shape to your character's gameobject. The position anchor must be on the floor. Set type to `Kinematic` and switch locked rotation to `true`.
 
 2. Add `walker.script` to your character's gameobject and configure its script properties in the editor.
 
 ### Crouching
 
-To allow crouching add the `collision_crouching` collision object with the capsule shape with the same collision properties as the `collision_standing` but with a lower height.
+To allow crouching add the `collision_crouching` collision object with the capsule shape with the same collision properties as the `collision_standing` but with a lower height. Then set the [`is_crouching_allowed`](#is_crouching_allowed) to `true`.
 
 ### Camera
 
@@ -51,7 +51,7 @@ To follow your camera gameobject rotation:
   msg.post(walker_url, hash 'follow_camera', { camera = camera_url })
 ```
 
-To automatically move the camera up and down when standing and crouching add an empty gameobject `eyes` in the walker gameobject and use it to attach your camera.
+To automatically move the camera up and down when standing and crouching add an empty gameobject `eyes` in the walker gameobject and use it to attach your camera. Then set the [`eyes_switching`](#eyes_switching) to `true`.
 
 ### Operator
 
@@ -107,12 +107,6 @@ How much units of velocity should be changed per second to get a lower velocity.
 
 - `20` - if the `normal_speed` is `5`, then the time required to decelerate from the walking velocity to the zero velocity will be `0.25` seconds.
 - `0` - _don't use otherwise you will never stop the walker._
-
-### is_crouching_allowed
-
-Allows to crouch. Be sure that the `collision_crouching` is set.
-
-Use it to temporary disable crouchoing in runtime, for example.
 
 ### stair_height
 
@@ -188,6 +182,10 @@ How much units of velocity should be changed per second to reach the [`gravity`]
 
 The sensor length to check the ground, ceiling and slopes. Minimum value is `0.05` because of the Bullet physics [collision margin](https://forum.defold.com/t/using-a-dae-mesh-for-collision/69434/3).
 
+### is_crouching_allowed
+
+Allows to crouch. Be sure that the `collision_crouching` is set.
+
 ### collision_standing
 
 The `url` of the collision object with a standing capsule shape.
@@ -198,23 +196,19 @@ The `url` of the collision object with a crouching capsule shape.
 
 Is optional if you don't plan to allow crouch.
 
-### walker_collision_group
+### eyes_switching
 
-The collision group you set in the [`collision_standing`](#collision-standing) and [`collision_crouching`](#collision-crouching) collision object properties.
+Animates the [`eyes`](#eyes) gameobject position up and down when standing and crouching.
 
-### world_collision_group
+### eyes
 
-The collision group you use in the level geometry.
-
-### eyes_position_url
-
-The `url` of a gameobject for the camera attachment. Its position will be animated when crouching and standing.
+The `url` of a gameobject for the camera attachment. Its position will be animated when the [`eyes_switching`](#eyes_switching) is `true`.
 
 Is optional if you don't plan to switch the camera position.
 
 ### eyes_switch_duration
 
-Duration of the `eyes` gameobject position animation when crouching and standing.
+Duration of the [`eyes`](#eyes) gameobject position animation when crouching and standing.
 
 ## Incoming Messages
 
@@ -232,6 +226,14 @@ Enable or disable the [spectator mode](#spectator_mode).
 
 ```lua
 msg.post(walker_url, hash 'spectator_mode', { is_enabled = true } )
+```
+
+### collision_mask
+
+Unfortunately, there is no way to get your collision object mask automatically in Defold at the moment. So if you use a mask other than `default` in [`collision_standing`](#collision_standing) and [`collision_crouching`](#collision_crouching), please provide it with this message during initialization.
+
+```lua
+msg.post(walker_url, hash 'collision_mask', { hash 'default', hash 'solid' } )
 ```
 
 ### follow_camera
