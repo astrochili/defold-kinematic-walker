@@ -41,9 +41,6 @@ go.property('sensor_length', 0.05)
 go.property('collision_standing', msg.url('#collision_standing'))
 go.property('collision_crouching', msg.url('#collision_crouching'))
 
-go.property('walker_collision_group', hash('walker'))
-go.property('world_collision_group', hash('default'))
-
 go.property('eyes_position_url', msg.url('eyes'))
 go.property('eyes_switch_duration', 0.2)
 
@@ -126,7 +123,7 @@ end
 
 local function init_capsule_size(self)
   local size = { }
-  local collision_groups = { self.walker_collision_group }
+  local collision_groups = { self.collision_group }
   local ray_distance = 1000
 
   -- Get the standing height
@@ -135,7 +132,7 @@ local function init_capsule_size(self)
   local standing_ray_from = standing_ray_to + vectors.up * ray_distance
   local standing_result = physics.raycast(standing_ray_from, standing_ray_to, collision_groups)
 
-  assert(standing_result, 'Can\'t find the standing collision capsule ' .. tostring(self.collision_standing) .. ' with the ' .. tostring(self.walker_collision_group) .. ' group')
+  assert(standing_result, 'Can\'t find the standing collision capsule ' .. tostring(self.collision_standing) .. ' with the ' .. tostring(self.collision_group) .. ' group')
   size.height = ray_distance * (1 - standing_result.fraction)
   
   -- Get the radius
@@ -175,8 +172,8 @@ local function did_raycast(self, response)
       self.eyes_position_crouching = self.eyes_position_standing + vectors.down * (self.capsule_size.height - self.capsule_size.height_crouching)
     end
   else
+    assert(response.fraction, 'Can\'t find the crouching collision capsule ' .. tostring(self.collision_crouching) .. ' with the ' .. tostring(self.collision_group) .. ' group')
     self.collision_crouching = nil
-    assert(response.fraction, 'Can\'t find the crouching collision capsule ' .. tostring(self.collision_crouching) .. ' with the ' .. tostring(self.walker_collision_group) .. ' group')
   end
 end
 
@@ -454,6 +451,8 @@ function init(self)
   self.is_ceiling_above = false
 
   self.collision = self.collision_standing
+  self.collision_group = physics.get_group(self.collision)
+  self.collision_mask = { hash 'default' }
 
   if self.eyes_position_url then
     self.eyes_position_standing = go.get_position(self.eyes_position_url)
@@ -499,12 +498,12 @@ function update(self, dt)
   if not self.spectator_mode then
     local ground_ray_from = self.position + vectors.up * self.capsule_size.radius
     local ground_ray_to = self.position + vectors.down * self.sensor_length
-    self.ground = physics.raycast(ground_ray_from, ground_ray_to, { self.world_collision_group })
+    self.ground = physics.raycast(ground_ray_from, ground_ray_to, self.collision_mask)
 
     if self.slope then
       local slope_ray_from = ground_ray_from
       local slope_ray_to = ground_ray_from - self.slope.normal * (self.capsule_size.radius + self.sensor_length)
-      self.slope = physics.raycast(slope_ray_from, slope_ray_to, { self.world_collision_group })
+      self.slope = physics.raycast(slope_ray_from, slope_ray_to, self.collision_mask)
       self.ground = self.ground or self.slope
       
       add_debug_line(self, slope_ray_from, slope_ray_to, self.slope and debug_colors.green or debug_colors.black)
@@ -572,7 +571,7 @@ function update(self, dt)
 
   local ceiling_ray_from = self.position
   local ceiling_ray_to = ceiling_ray_from + self.ceiling_sensor_position + vectors.up * self.sensor_length
-  local ceiling = physics.raycast(ceiling_ray_from, ceiling_ray_to, { self.world_collision_group })
+  local ceiling = physics.raycast(ceiling_ray_from, ceiling_ray_to, self.collision_mask)
   self.is_ceiling_above = ceiling ~= nil
 
   if self.is_jumping and self.is_ceiling_above then
@@ -650,7 +649,7 @@ function update(self, dt)
     local stair_sensor = vmath.normalize(movement) * (self.capsule_size.radius + self.sensor_length + vmath.length(movement))
     local stair_ray_from = self.position + stair_sensor + vectors.up * self.stair_height
     local stair_ray_to = stair_ray_from + vectors.down * (self.stair_height - self.sensor_length)
-    local result = physics.raycast(stair_ray_from, stair_ray_to, { self.world_collision_group })
+    local result = physics.raycast(stair_ray_from, stair_ray_to, self.collision_mask)
 
     add_debug_line(self, stair_ray_from, stair_ray_to, debug_colors.red)
 
@@ -764,6 +763,8 @@ function on_message(self, message_id, message, sender)
     handle_contact_point_response(self, message, sender)
   elseif message_id == hash 'trigger_response' then
     handle_trigger_response(self, message, sender)
+  elseif message_id == hash 'collision_mask' then
+    self.collision_mask = message
   elseif message_id == hash 'did_init' then
     did_init(self)
   elseif message_id == hash 'ray_cast_response' or message_id == hash 'ray_cast_missed' then

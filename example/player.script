@@ -34,6 +34,7 @@ function init(self)
   msg.post(urls.model_crouching, hash 'disable')
   msg.post(urls.operator, hash 'follow_point', { object = urls.eyes })
   msg.post(urls.walker, hash 'follow_camera', { camera = urls.operator })
+  msg.post(urls.walker, hash 'collision_mask', { hash 'default', hash 'trigger' })
   
   window.set_listener(handle_window_event)
 end
