@@ -30,6 +30,8 @@ function init(self)
   urls.model_crouching = msg.url('model#crouching')
   urls.model_standing = msg.url('model#standing')
 
+  self.restart_position = go.get_position('.')
+
   msg.post('.', hash 'acquire_input_focus')
   msg.post(urls.model_crouching, hash 'disable')
   msg.post(urls.operator, hash 'follow_point', { object = urls.eyes })
@@ -58,7 +60,9 @@ function on_message(self, message_id, message, sender)
 end
 
 function on_input(self, action_id, action)
-  if action_id == hash 'key_f' and action.released then
+  if action_id == hash 'key_r' and action.released then
+    go.set_position(self.restart_position, '.')
+  elseif action_id == hash 'key_f' and action.released then
     spectator_mode = not spectator_mode
     msg.post(urls.walker, hash 'spectator_mode', { is_enabled = spectator_mode } )
   elseif action_id == hash 'key_l' and action.released then

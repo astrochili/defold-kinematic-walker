@@ -85,7 +85,7 @@ nodes {
   }
   size {
     x: 380.0
-    y: 100.0
+    y: 120.0
     z: 0.0
     w: 1.0
   }
@@ -156,6 +156,7 @@ nodes {
   text: "[WASD] - Move\n"
   "[Left Shift] - Run\n"
   "[Space] - Jump\n"
+  "[Mouse Wheel] - Zoom\n"
   "[C] - Crouch"
   font: "system_font"
   id: "text"
@@ -220,8 +221,9 @@ nodes {
   }
   type: TYPE_TEXT
   blend_mode: BLEND_MODE_ALPHA
-  text: "[Mouse Wheel] - Zoom\n"
+  text: "[R] - Restart\n"
   "[F] - Spectator Mode\n"
+  " \n"
   "[L] - Debug\n"
   "[H] - This Hint"
   font: "system_font"

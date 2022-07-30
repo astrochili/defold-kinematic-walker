@@ -499,6 +499,10 @@ function update(self, dt)
 
   physics.wakeup(self.collision)
 
+  -- Position
+
+  self.position = go.get_position('.')
+
   -- Rotation
   
   self.rotation = go.get_rotation('.')
