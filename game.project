@@ -17,6 +17,7 @@ game_binding = /builtins/input/all.input_bindingc
 
 [physics]
 type = 3D
+max_collision_object_count = 512
 
 [html5]
 scale_mode = stretch
