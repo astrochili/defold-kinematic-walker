@@ -1,0 +1,19 @@
+--[[
+  body.script
+  github.com/astrochili/defold-kinematic-walker
+
+  Copyright (c) 2023 Roman Silin
+  MIT license. See LICENSE for details.
+--]]
+
+function on_message(self, message_id, message, sender)
+  if self.walker and message_id == hash 'contact_point_response' then
+    local message = { point = message, sender = sender}
+    msg.post(self.walker, hash '_contact_point_response', message)
+  elseif self.walker and message_id == hash 'trigger_response' then
+    local message = { point = message, sender = sender}
+    msg.post(self.walker, hash '_trigger_response', message)
+  elseif message_id == hash 'walker_here' then
+    self.walker = sender
+  end
+end
