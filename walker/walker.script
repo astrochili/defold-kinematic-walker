@@ -231,10 +231,11 @@ end
 -- Collisions
 
 local function handle_contact_point_response(self, point, sender)
-  pprint('--- handle_contact_point_response()')
   if self.pause ~= nil or not self.clipping or point.distance < 0.001 then
     return
   end
+
+  pprint('# handle_contact_point_response()')
 
   if sender == self.collision_standing and self.is_crouching then
     local center = vmath.vector3(self.position.x, point.position.y, self.position.z)
@@ -248,6 +249,7 @@ local function handle_contact_point_response(self, point, sender)
   end
 
   if sender ~= self.collision then
+    pprint('# return because sender ~= self.collision')
     return
   end
 
@@ -306,7 +308,10 @@ local function handle_contact_point_response(self, point, sender)
         self.squizzing = cross_direction * movement_length * squizing_dot  
       end
 
-      local reversed_movement = self.initial_position - self.position
+      -- It's an interesting fact that the old code fixes the jitters in front of the poles.
+      -- So it's required to for investigation
+      -- local reversed_movement = self.initial_position - self.position
+      local reversed_movement = vmath.rotate(self.rotation, -self.body_position)
       compensation = reversed_movement + self.squizzing
     end
   else
@@ -504,7 +509,7 @@ function did_init(self)
 end
 
 function update(self, dt)
-  print('--- update(dt: ' .. dt .. ')')
+  print('+ update(dt: ' .. dt .. ')')
   if self.pause ~= nil then
     if self.pause == false then
       self.pause = nil
@@ -536,7 +541,7 @@ function update(self, dt)
     interpolation = math.max(0, math.min(1, interpolation))
     local lerp_position = vmath.lerp(interpolation, self.initial_position, self.position)
 
-    pprint('self.set_position(lerp_position): ' .. lerp_position)
+    pprint('visual_position: ' .. lerp_position)
     go.set_position(lerp_position)
   else
     go.set_position(self.position)
@@ -544,7 +549,7 @@ function update(self, dt)
 end
 
 function fixed_update(self, dt)
-  print('--- fixed_update(dt: ' .. dt)
+  print('+ fixed_update(dt: ' .. dt .. ')')
   self.last_fixed_update_time = os.clock()
   self.last_fixed_update_dt = dt
 
@@ -648,6 +653,8 @@ function fixed_update(self, dt)
     should_force_velocity = true
   end
 
+  pprint(ceiling_ray_from)
+  pprint(ceiling_ray_to)
   add_debug_line(self, ceiling_ray_from, ceiling_ray_to, self.is_ceiling_above and debug_colors.red or debug_colors.black)
 
   -- Crouching
@@ -743,7 +750,7 @@ function fixed_update(self, dt)
     
     self.body_position = vmath.rotate(vmath.conj(self.rotation), self.intended_movement)
     go.set_position(self.body_position, self.body)
-    print('body.set_position(moving): ' .. self.body_position)
+    print('body_position (moving): ' .. self.body_position)
   end
 
   if self.intended_movement ~= vectors.zero then
