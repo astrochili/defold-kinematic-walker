@@ -363,7 +363,7 @@ end
 -- Triggers
 
 local function handle_trigger_response(self, message, sender)
-  if sender == self.current_collision_url then
+  if sender == self.collision then
     if message.enter then
       self.trigger_ids[message.other_id] = true
       post(self.observer, hash 'walker_trigger_enter', message)
