@@ -1,6 +1,0 @@
-material: "/render/materials/model.material"
-vertices: "/assets/models/player/standing.buffer"
-textures: "/assets/textures/blockout/blue_check.png"
-primitive_type: PRIMITIVE_TRIANGLES
-position_stream: "position"
-normal_stream: "normal"

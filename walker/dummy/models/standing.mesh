@@ -1,0 +1,6 @@
+material: "/walker/dummy/materials/model.material"
+vertices: "/walker/dummy/models/standing.buffer"
+textures: "/walker/dummy/textures/blue.png"
+primitive_type: PRIMITIVE_TRIANGLES
+position_stream: "position"
+normal_stream: "normal"

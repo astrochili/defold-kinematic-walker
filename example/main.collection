@@ -1,7 +1,7 @@
 name: "main"
 collection_instances {
   id: "sandbox"
-  collection: "/assets/maps/sandbox/sandbox.collection"
+  collection: "/example/assets/maps/sandbox/sandbox.collection"
   position {
     x: 0.0
     y: 0.0
@@ -32,6 +32,17 @@ collection_instances {
     y: 0.38268343
     z: 0.0
     w: 0.9238795
+  }
+  instance_properties {
+    id: "operator/operator"
+    properties {
+      id: "operator"
+      properties {
+        id: "zoom"
+        value: "2.5"
+        type: PROPERTY_TYPE_NUMBER
+      }
+    }
   }
   scale3 {
     x: 1.0

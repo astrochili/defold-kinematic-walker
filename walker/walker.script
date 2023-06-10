@@ -36,18 +36,18 @@ go.property('gravity_acceleration', 3)
 
 go.property('sensor_length', 0.05)
 
-go.property('is_crouching_allowed', false)
+go.property('is_crouching_allowed', true)
 
 go.property('body', msg.url('body'))
 go.property('collision_standing', msg.url('body#collision_standing'))
 go.property('collision_crouching', msg.url('body#collision_crouching'))
 
-go.property('eyes_switching', false)
+go.property('eyes_switching', true)
 go.property('eyes', msg.url('eyes'))
 go.property('eyes_switch_duration', 0.2)
 
 --
--- Helpers
+-- Constants
 
 local debug_colors = {
   black = vmath.vector4(0, 0, 0, 1),
@@ -68,6 +68,9 @@ local vectors = {
 local constants = {
   collision_crouching_raycast_id = 101
 }
+
+--
+-- Helpers
 
 local function project_on_plane(plane_normal, v)
   local distance = vmath.dot(plane_normal, v)
@@ -230,7 +233,7 @@ end
 --
 -- Collisions
 
-local function handle_contact_point_response(self, point, sender)
+local function handle_contact_point(self, point, sender)
   if self.pause ~= nil or not self.clipping or point.distance < 0.001 then
     return
   end
@@ -354,7 +357,7 @@ end
 --
 -- Triggers
 
-local function handle_trigger_response(self, message, sender)
+local function handle_trigger(self, message, sender)
   if sender == self.collision then
     if message.enter then
       self.trigger_ids[message.other_id] = true
@@ -824,10 +827,10 @@ function on_input(self, action_id, action)
 end
 
 function on_message(self, message_id, message, sender)
-  if message_id == hash '_contact_point_response' then
-    handle_contact_point_response(self, message.point, message.sender)
-  elseif message_id == hash '_trigger_response' then
-    handle_trigger_response(self,  message.point, message.sender)
+  if message_id == hash 'contact_point' then
+    handle_contact_point(self, message.point, message.sender)
+  elseif message_id == hash 'trigger' then
+    handle_trigger(self,  message.point, message.sender)
   elseif message_id == hash 'collision_mask' then
     self.collision_mask = message
   elseif message_id == hash 'did_init' then
