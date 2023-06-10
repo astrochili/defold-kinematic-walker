@@ -44,7 +44,7 @@ function init(self)
 
   if urls.operator then
     msg.post(urls.operator, hash 'follow_point', { object = urls.eyes })
-    msg.post(urls.walker, hash 'follow_camera', { camera = urls.operator })
+    msg.post(urls.walker, hash 'follow_camera_rotation', { camera = urls.operator })
   end  
 
   msg.post(urls.walker, hash 'collision_mask', { hash 'default', hash 'trigger' })

@@ -48,7 +48,7 @@ To allow crouching add the `collision_crouching` collision object with the capsu
 To follow your camera gameobject rotation:
 
 ```lua
-  msg.post(walker_url, hash 'follow_camera', { camera = camera_url })
+  msg.post(walker_url, hash 'follow_camera_rotation', { camera = camera_url })
 ```
 
 To automatically move the camera up and down when standing and crouching add an empty gameobject `eyes` in the walker gameobject and use it to attach your camera. Then set the [`eyes_switching`](#eyes_switching) to `true`.
@@ -59,7 +59,7 @@ To use [Operator](https://github.com/astrochili/defold-operator/) as the camera 
 
 ```lua
   msg.post(operator_url, hash 'follow_point', { object = eyes_url })
-  msg.post(walker_url, hash 'follow_camera', { camera = operator_url })
+  msg.post(walker_url, hash 'follow_camera_rotation', { camera = operator_url })
 ```
 
 ### Controls
@@ -236,20 +236,20 @@ Unfortunately, there is no way to get your collision object mask automatically i
 msg.post(walker_url, hash 'collision_mask', { hash 'default', hash 'solid' } )
 ```
 
-### follow_camera
+### follow_camera_rotation
 
 Follow the camera object rotation to apply it on the walker rotation.
 
 ```lua
-msg.post(walker_url, hash 'follow_camera', { camera = camera_url })
+msg.post(walker_url, hash 'follow_camera_rotation', { camera = camera_url })
 ```
 
-### unfollow_camera
+### unfollow_camera_rotation
 
 Stop to follow the camera object rotation.
 
 ```lua
-msg.post(walker_url, hash 'unfollow_camera')
+msg.post(walker_url, hash 'unfollow_camera_rotation')
 ```
 
 ### internal_control
@@ -359,7 +359,7 @@ Forwards the [`trigger_response`](https://defold.com/ref/beta/physics/#trigger_r
 - `position` - the actual position of the walker.
 - `correction` - the last position correction.
 
-Sends to the [`observer`](#observer) and the following [`camera`](#follow_camera) post movement corrections after collision resolving in the `on_message` function.
+Sends to the [`observer`](#observer) and the following [`camera`](#follow_camera_rotation) post movement corrections after collision resolving in the `on_message` function.
 
 > Used by [Operator](https://github.com/astrochili/defold-operator/) to update the camera position without lags.
 
@@ -367,7 +367,7 @@ Sends to the [`observer`](#observer) and the following [`camera`](#follow_camera
 
 - `normal` - the ground normal or nil.
 
-Sends to the following [`camera`](#follow_camera) the current ground normal.
+Sends to the following [`camera`](#follow_camera_rotation) the current ground normal.
 
 > Used by [Operator](https://github.com/astrochili/defold-operator/) to align the camera to the ground slope.
 

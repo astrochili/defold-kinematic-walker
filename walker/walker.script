@@ -841,10 +841,10 @@ function on_message(self, message_id, message, sender)
     self.is_debug = message.is_enabled
   elseif message_id == hash 'spectator_mode' then
     set_spectator_mode(self, message.is_enabled)
-  elseif message_id == hash 'follow_camera' then
+  elseif message_id == hash 'follow_camera_rotation' then
     self.camera = msg.url(message.camera)
     self.camera.fragment = nil
-  elseif message_id == hash 'unfollow_camera' then
+  elseif message_id == hash 'unfollow_camera_rotation' then
     self.camera = nil
   elseif message_id == hash 'internal_control' then
     self.internal_control = message.is_enabled
