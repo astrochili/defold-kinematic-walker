@@ -1,7 +1,13 @@
 ![logo](https://user-images.githubusercontent.com/4752473/175769046-bbf9f71c-c970-4921-a27f-d56361ce0e53.png)
-[![buymeacoffee](https://user-images.githubusercontent.com/4752473/179627111-617b77b1-f900-4fac-9e03-df73994246ad.svg)](https://www.buymeacoffee.com/astrochili) [![tinkoff](https://user-images.githubusercontent.com/4752473/188312285-9162bbed-e50f-40ad-9fbf-a622a80f0249.svg)](https://www.tinkoff.ru/cf/4B9FjHDHA5a) [![twitter](https://user-images.githubusercontent.com/4752473/179627140-c8991473-c4c1-4d6a-9bb1-4dc2117b049f.svg)](https://twitter.com/astronachos) [![telegram](https://user-images.githubusercontent.com/4752473/179627134-0bdcf8a5-7826-4ed2-b8cd-06d0b9792422.svg)](https://t.me/astronachos)
+[![astronachos](https://raw.githubusercontent.com/astronachos/astronachos.github.io/master/static/badges/astronachos.svg)](https://astronachos.com) [![twitter](https://raw.githubusercontent.com/astronachos/astronachos.github.io/master/static/badges/twitter.svg)](https://twitter.com/astronachos) [![telegram](https://raw.githubusercontent.com/astronachos/astronachos.github.io/master/static/badges/telegram.svg)](https://t.me/astronachos) [![buymeacoffee](https://raw.githubusercontent.com/astronachos/astronachos.github.io/master/static/badges/buymeacoffee.svg)](https://www.buymeacoffee.com/astrochili) [![tinkoff](https://raw.githubusercontent.com/astronachos/astronachos.github.io/master/static/badges/tinkoff.svg)](https://www.tinkoff.ru/cf/4B9FjHDHA5a)
 
 # Defold Kinematic Walker
+
+📼 Also in this series:
+- 🎥 [Operator](https://github.com/astrochili/defold-operator)
+- 🏗️ [TrenchBroom](https://github.com/astrochili/defold-trenchbroom)
+- 🎄 [Illumination](https://github.com/astrochili/defold-illumination)
+- 🚧 [Blockout Textures](https://github.com/astrochili/blockout-textures)
 
 ## Overview
 
@@ -14,8 +20,6 @@ Ready to use with [🎥 Operator](https://github.com/astrochili/defold-operator/
 🎮 [Play HTML5 demo](https://astronachos.com/defold/kinematic-walker).
 
 💬 [Discuss on the forum](https://forum.defold.com/t/kinematic-walker-character-movement-controller-for-3d-games/71160/).
-
-🎁 Get [free blockout textures](https://github.com/astrochili/blockout-textures) used in the demo.
 
 ## Features
 
