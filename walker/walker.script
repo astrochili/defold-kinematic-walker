@@ -36,13 +36,13 @@ go.property('gravity_acceleration', 3)
 
 go.property('sensor_length', 0.05)
 
-go.property('is_crouching_allowed', true)
+go.property('is_crouching_allowed', false)
 
 go.property('body', msg.url('body'))
 go.property('collision_standing', msg.url('body#collision_standing'))
 go.property('collision_crouching', msg.url('body#collision_crouching'))
 
-go.property('eyes_switching', true)
+go.property('eyes_switching', false)
 go.property('eyes', msg.url('eyes'))
 go.property('eyes_switch_duration', 0.2)
 

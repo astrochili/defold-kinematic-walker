@@ -33,9 +33,36 @@ Ready to use with [🎥 Operator](https://github.com/astrochili/defold-operator/
 
 Add link to the zip-archive of the latest version of [defold-kinematic-walker](https://github.com/astrochili/defold-kinematic-walker/releases) to your Defold project as [dependency](http://www.defold.com/manuals/libraries/).
 
+## Project Settings
+
+The following settings in the `game.project` file are recommended for the walker to work correctly:
+
+```ini
+[physics]
+type = 3D
+use_fixed_timestep = 1
+max_fixed_timesteps = 1
+
+[display]
+update_frequency = 60
+
+[engine]
+fixed_update_frequency = 60
+```
+
 ## Quick Start
 
-1. Add the `collision_standing` collision object with the capsule shape to your character's gameobject. The position anchor must be on the floor. Set type to `Kinematic` and switch locked rotation to `true`.
+Add the `dummy.collection` collection to your scene. It's already composed collection of the player with capsule collision objects and models to test hypotheses and adjust things for your needs.
+
+Make sure you set up the camera correctly or connect [Operator](#operator). The `dummy.script` can integrate it automatically, so just fill in the url in the `operator` property.
+
+## Advanced Start
+
+### Minimal setup
+
+1. Add a gameobject `body` to your character's gamoobject and attach the `body.script` component to it.
+
+2. Add the `collision_standing` collision object with the capsule shape to the `body` gameobject. Set type to `Kinematic` and switch locked rotation to `true`. The position anchor must be on the floor.
 
 2. Add `walker.script` to your character's gameobject and configure its script properties in the editor.
 
