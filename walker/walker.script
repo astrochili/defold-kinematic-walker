@@ -849,6 +849,8 @@ function on_message(self, message_id, message, sender)
     self.bindings = message.bindings
   elseif message_id == hash 'manual_control' then
     self.input = message
+  elseif message_id == hash 'teleport' then
+    self.position = message.position
   elseif message_id == hash 'pause' then
     self.pause = message.is_paused
   end

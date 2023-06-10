@@ -61,7 +61,7 @@ end
 
 function on_input(self, action_id, action)
   if action_id == hash 'key_r' and action.released then
-    go.set_position(self.restart_position, '.')
+    msg.post(urls.walker, hash 'teleport', { position = self.restart_position } )
   elseif action_id == hash 'key_f' and action.released then
     spectator_mode = not spectator_mode
     msg.post(urls.walker, hash 'spectator_mode', { is_enabled = spectator_mode } )

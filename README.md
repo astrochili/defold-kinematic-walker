@@ -298,6 +298,14 @@ local input = {
 msg.post(walker_url, hash 'manual_control', input)
 ```
 
+### teleport
+
+Move the walker instantly to another position. Since `go.set_position()` is used inside the walker script for its own purposes, use this message to change the position.
+
+```lua
+msg.post(walker_url, hash 'teleport', { position = vmath.vector3() } )
+```
+
 ### pause
 
 Enables or disables the update and collision resolving functions.
