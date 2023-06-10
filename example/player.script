@@ -56,6 +56,11 @@ function on_message(self, message_id, message, sender)
     log('Player jumped')
   elseif message_id == hash 'walker_falling' then
     log('Player fell from a height: ' .. message.height)
+  elseif message_id == hash 'walker_trigger_enter' then
+    log('Player entred to the trigger: ' .. message.other_id)
+    msg.post(urls.walker, hash 'teleport', { position = self.restart_position } )
+  elseif message_id == hash 'walker_trigger_exit' then
+    log('Player left the trigger: ' .. message.other_id)
   end
 end
 
