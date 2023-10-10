@@ -1,3 +1,17 @@
+--[[
+  void.script
+  github.com/astrochili/defold-kinematic-walker
+
+  Copyright (c) 2023 Roman Silin
+  MIT license. See LICENSE for details.
+--]]
+
+
+local hashes = require 'walker.hashes'
+
+--
+-- Lifecycle
+
 function init(self)
   local player = msg.url('/player/dummy/dummy')
   self.restart_position = go.get_position(player)
@@ -6,6 +20,6 @@ end
 function on_message(self, message_id, message, sender)
   if message_id == hash 'trigger_response' then
     local walker = msg.url('/player/dummy/dummy#walker')
-    msg.post(walker, hash 'teleport', { position = self.restart_position } )
+    msg.post(walker, hashes.teleport, { position = self.restart_position } )
   end
 end

@@ -1,36 +1,5 @@
 name: "player"
 collection_instances {
-  id: "operator"
-  collection: "/operator/operator/operator.collection"
-  position {
-    x: 0.0
-    y: 2.0
-    z: 0.0
-  }
-  rotation {
-    x: -0.25881904
-    y: 0.0
-    z: 0.0
-    w: 0.9659258
-  }
-  instance_properties {
-    id: "operator"
-    properties {
-      id: "operator"
-      properties {
-        id: "zoom"
-        value: "2.5"
-        type: PROPERTY_TYPE_NUMBER
-      }
-    }
-  }
-  scale3 {
-    x: 1.0
-    y: 1.0
-    z: 1.0
-  }
-}
-collection_instances {
   id: "dummy"
   collection: "/walker/dummy/dummy.collection"
   position {
@@ -52,6 +21,42 @@ collection_instances {
         id: "operator"
         value: "/player/operator/operator"
         type: PROPERTY_TYPE_URL
+      }
+    }
+  }
+  scale3 {
+    x: 1.0
+    y: 1.0
+    z: 1.0
+  }
+}
+collection_instances {
+  id: "operator"
+  collection: "/operator/operator/operator.collection"
+  position {
+    x: 0.0
+    y: 2.0
+    z: 0.0
+  }
+  rotation {
+    x: -0.25881904
+    y: 0.0
+    z: 0.0
+    w: 0.9659258
+  }
+  instance_properties {
+    id: "operator"
+    properties {
+      id: "operator"
+      properties {
+        id: "internal_control"
+        value: "false"
+        type: PROPERTY_TYPE_BOOLEAN
+      }
+      properties {
+        id: "zoom"
+        value: "2.5"
+        type: PROPERTY_TYPE_NUMBER
       }
     }
   }

@@ -1,3 +1,14 @@
+--[[
+  dummy.script
+  github.com/astrochili/defold-kinematic-walker
+
+  Copyright (c) 2023 Roman Silin
+  MIT license. See LICENSE for details.
+--]]
+
+local hashes = require 'walker.hashes'
+
+--
 -- Properties
 
 go.property('operator', msg.url())
@@ -5,21 +16,17 @@ go.property('operator', msg.url())
 --
 -- Local
 
-local spectator_mode = false
-local is_debug = false
-local urls = { }
-
-local function log(message)
-  if is_debug then
+local function log(self, message)
+  if self.is_debug then
     print(message)
   end
 end
 
 local function handle_window_event(self, event, data)
   if event == window.WINDOW_EVENT_FOCUS_LOST then
-    msg.post(urls.walker, hash 'pause', { is_paused = true })
+    msg.post(self.urls.walker, hashes.pause, { is_paused = true })
   elseif event == window.WINDOW_EVENT_FOCUS_GAINED then
-    msg.post(urls.walker, hash 'pause', { is_paused = false })
+    msg.post(self.urls.walker, hashes.pause, { is_paused = false })
   end
 end
 
@@ -27,61 +34,67 @@ end
 -- Lifecycle
 
 function init(self)
-  if self.operator ~= msg.url('#') then
-    urls.operator = self.operator
+  self.urls = {
+    go = msg.url('.'),
+    this = msg.url('#'),
+    walker = msg.url('#walker'),
+    eyes = msg.url('eyes'),
+    model_crouching = msg.url('model#crouching'),
+    model_standing = msg.url('model#standing'),
+  }
+
+  if self.operator ~= self.urls.this then
+    self.urls.operator = self.operator
   end
-  
-  urls.walker = msg.url('#walker')
-  urls.eyes = msg.url('eyes')
 
-  urls.model_crouching = msg.url('model#crouching')
-  urls.model_standing = msg.url('model#standing')
+  self.spectator_mode = false
+  self.is_debug = false
 
-  self.restart_position = go.get_position('.')
+  self.restart_position = go.get_position(self.urls.go)
 
-  msg.post('.', hash 'acquire_input_focus')
-  msg.post(urls.model_crouching, hash 'disable')
+  msg.post(self.urls.go, hashes.acquire_input_focus)
+  msg.post(self.urls.model_crouching, hash 'disable')
 
-  if urls.operator then
-    msg.post(urls.operator, hash 'follow_point', { object = urls.eyes })
-    msg.post(urls.walker, hash 'follow_camera_rotation', { camera = urls.operator })
-  end  
+  if self.urls.operator then
+    msg.post(self.urls.operator, hash 'follow_point', { object = self.urls.eyes })
+    msg.post(self.urls.walker, hashes.follow_camera_rotation, { camera = self.urls.operator })
+  end
 
-  msg.post(urls.walker, hash 'collision_mask', { hash 'default', hash 'trigger' })
-  
+  msg.post(self.urls.walker, hashes.collision_mask, { hashes.default, hashes.trigger })
+
   window.set_listener(handle_window_event)
 end
 
 function on_message(self, message_id, message, sender)
-  if message_id == hash 'walker_crouching' then
-    log('Dummy is crouching')
-    msg.post(urls.model_crouching, hash 'enable')
-    msg.post(urls.model_standing, hash 'disable')
-  elseif message_id == hash 'walker_standing' then
-    log('Dummy is standing')
-    msg.post(urls.model_crouching, hash 'disable')
-    msg.post(urls.model_standing, hash 'enable')
-  elseif message_id == hash 'walker_moving' then
-    log('Dummy is moving with speed: ' .. message.speed)
-  elseif message_id == hash 'walker_jumping' then
-    log('Dummy jumped')
-  elseif message_id == hash 'walker_falling' then
-    log('Dummy fell from a height: ' .. message.height)
-  elseif message_id == hash 'walker_trigger_enter' then
-    log('Dummy entred to the trigger: ' .. message.other_id)
-  elseif message_id == hash 'walker_trigger_exit' then
-    log('Dummy left the trigger: ' .. message.other_id)
+  if message_id == hashes.walker_crouching then
+    log(self, 'Dummy is crouching')
+    msg.post(self.urls.model_crouching, hash 'enable')
+    msg.post(self.urls.model_standing, hash 'disable')
+  elseif message_id == hashes.walker_standing then
+    log(self, 'Dummy is standing')
+    msg.post(self.urls.model_crouching, hash 'disable')
+    msg.post(self.urls.model_standing, hash 'enable')
+  elseif message_id == hashes.walker_moving then
+    log(self, 'Dummy is moving with speed: ' .. message.speed)
+  elseif message_id == hashes.walker_jumping then
+    log(self, 'Dummy jumped')
+  elseif message_id == hashes.walker_falling then
+    log(self, 'Dummy fell from a height: ' .. message.height)
+  elseif message_id == hashes.walker_trigger_enter then
+    log(self, 'Dummy entred to the trigger: ' .. message.other_id)
+  elseif message_id == hashes.walker_trigger_exit then
+    log(self, 'Dummy left the trigger: ' .. message.other_id)
   end
 end
 
 function on_input(self, action_id, action)
   if action_id == hash 'key_r' and action.released then
-    msg.post(urls.walker, hash 'teleport', { position = self.restart_position } )
+    msg.post(self.urls.walker, hashes.teleport, { position = self.restart_position } )
   elseif action_id == hash 'key_f' and action.released then
-    spectator_mode = not spectator_mode
-    msg.post(urls.walker, hash 'spectator_mode', { is_enabled = spectator_mode } )
+    self.spectator_mode = not self.spectator_mode
+    msg.post(self.urls.walker, hashes.spectator_mode, { is_enabled = self.spectator_mode } )
   elseif action_id == hash 'key_l' and action.released then
-    is_debug = not is_debug
-    msg.post(urls.walker, hash 'debug', { is_enabled = is_debug } )
+    self.is_debug = not self.is_debug
+    msg.post(self.urls.walker, hashes.debug, { is_enabled = self.is_debug } )
   end
 end

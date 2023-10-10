@@ -1,3 +1,10 @@
+//
+// model.fp
+// github.com/astrochili/defold-kinematic-walker
+// Copyright (c) 2022 Roman Silin
+// MIT license. See LICENSE for details.
+//
+
 varying highp vec4 var_position;
 varying mediump vec3 var_normal;
 varying mediump vec2 var_texcoord0;
@@ -12,7 +19,7 @@ void main() {
     }
 
     float ambient_part = 0.8;
-    
+
     vec3 diffuse = vec3(1.0 - ambient_part);
     diffuse = vec3(ambient_part) + diffuse * vec3(var_normal.y);
 

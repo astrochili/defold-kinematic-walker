@@ -6,15 +6,20 @@
   MIT license. See LICENSE for details.
 --]]
 
+local hashes = require 'walker.hashes'
+
+--
+-- Lifecycle
+
 function on_message(self, message_id, message, sender)
   if self.walker then
     if message_id == hash 'contact_point_response' then
       local message = { point = message, sender = sender}
-      msg.post(self.walker, hash 'contact_point', message)
+      msg.post(self.walker, hashes.contact_point, message)
     elseif message_id == hash 'trigger_response' then
       local message = { point = message, sender = sender}
-      msg.post(self.walker, hash 'trigger', message)
-    end  
+      msg.post(self.walker, hashes.trigger, message)
+    end
   elseif message_id == hash 'walker_here' then
     self.walker = sender
   end
