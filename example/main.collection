@@ -1,7 +1,7 @@
 name: "main"
 collection_instances {
   id: "sandbox"
-  collection: "/example/assets/maps/sandbox/sandbox.collection"
+  collection: "/assets/maps/sandbox/sandbox.collection"
   position {
     x: 0.0
     y: 0.0

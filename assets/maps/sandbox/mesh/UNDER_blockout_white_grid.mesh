@@ -1,0 +1,6 @@
+material: "/walker/dummy/materials/model.material"
+vertices: "/assets/maps/sandbox/buffer/UNDER_blockout_white_grid.buffer"
+textures: "/assets/textures/blockout/white_grid.png"
+primitive_type: PRIMITIVE_TRIANGLES
+position_stream: "position"
+normal_stream: "normal"

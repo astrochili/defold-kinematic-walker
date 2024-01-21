@@ -1,6 +1,0 @@
-material: "/walker/dummy/materials/model.material"
-vertices: "/example/assets/maps/sandbox/buffer/worldspawn_blockout_aqua_light_grid.buffer"
-textures: "/example/assets/textures/blockout/aqua_light_grid.png"
-primitive_type: PRIMITIVE_TRIANGLES
-position_stream: "position"
-normal_stream: "normal"
