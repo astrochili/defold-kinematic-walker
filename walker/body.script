@@ -13,14 +13,14 @@ local hashes = require 'walker.hashes'
 
 function on_message(self, message_id, message, sender)
   if self.walker then
-    if message_id == hash 'contact_point_response' then
+    if message_id == hashes.contact_point_response then
       local message = { point = message, sender = sender}
-      msg.post(self.walker, hashes.contact_point, message)
-    elseif message_id == hash 'trigger_response' then
+      msg.post(self.walker, hashes.contact_point_info, message)
+    elseif message_id == hashes.trigger_response then
       local message = { point = message, sender = sender}
-      msg.post(self.walker, hashes.trigger, message)
+      msg.post(self.walker, hashes.trigger_info, message)
     end
-  elseif message_id == hash 'walker_here' then
+  elseif message_id == hashes.walker_here then
     self.walker = sender
   end
 end

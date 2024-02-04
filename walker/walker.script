@@ -833,9 +833,9 @@ end
 function on_message(self, message_id, message, sender)
   if message_id == hashes.post_update then
     post_update(self)
-  elseif message_id == hashes.contact_point then
+  elseif message_id == hashes.contact_point_info then
     handle_contact_point(self, message.point, message.sender)
-  elseif message_id == hashes.trigger then
+  elseif message_id == hashes.trigger_info then
     handle_trigger(self,  message.point, message.sender)
   elseif message_id == hashes.collision_mask then
     self.collision_mask = message
