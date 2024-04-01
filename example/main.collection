@@ -85,6 +85,7 @@ embedded_instances {
   "    }\\n"
   "    index: 0\\n"
   "    count: 3\\n"
+  "    id: \\\"\\\"\\n"
   "  }\\n"
   "  data: 50.0\\n"
   "  data: 1.5\\n"
